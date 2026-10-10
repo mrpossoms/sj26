@@ -16,6 +16,10 @@ const draw_region = (tex, p, s, uv) => {
         .draw_tri_fan();
 };
 
+const draw_fit = (tex) => {
+	draw_region(tex, [0, 0], [g.web.gfx.width() * (1/g.web.gfx.aspect()), g.web.gfx.height()], [0, 0, 1, 1]);
+};
+
 class Renderer
 {
 	constructor()
@@ -24,7 +28,9 @@ class Renderer
 
         this.textures = {
 			background: g.web.assets['tex/shop-background'],
-        	stage: g.web.assets['tex/test'],
+        	stage: g.web.assets['tex/shop-stage-frame'],
+        	cauldron: g.web.assets['tex/cauldron'],
+        	primary_vials: g.web.assets['tex/primary-potion-vials'],
         };
 
         this.shaders = {
@@ -39,10 +45,13 @@ class Renderer
 	{
 		if (!state) { return; }
 				
-		gl.clearColor(0.2, Math.sin(state.time_s), 0.25, 1);
+		gl.clearColor(0.2, 0.0, 0.25, 1);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-		draw_region(this.textures.background, [0, 0], [g.web.gfx.width(), g.web.gfx.height()], [0, 0, 1, 1]);
+		draw_fit(this.textures.background);
+		draw_fit(this.textures.stage);
+		draw_fit(this.textures.cauldron);
+		draw_fit(this.textures.primary_vials);
 	}
 }
 
