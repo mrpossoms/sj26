@@ -9,7 +9,6 @@ class Color
 
 	mix(other, t)
 	{
-		debugger
 		var h_o = [
 			other.h - 360,
 			other.h,
@@ -68,4 +67,4 @@ class Color
 	}
 }
 
-export default Color;
+export { Color };

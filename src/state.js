@@ -1,22 +1,39 @@
+
+class Player
+{
+	constructor()
+	{
+		this.skill = 0;
+	}
+}
+
+class Potion
+{
+	constructor(color, volume)
+	{
+		this.color = color;
+		this.volume = volume;
+	}
+}
+
 class Culdron
 {
 	constructor()
 	{
 		this._color = null;
-		this._level = 0;
-
+		this._volume = 0;
 	}
 
 	get color() { return this._color; }
 
-	get level() { return this._level; }
+	get volume() { return this._volume; }
 
-	get is_overflowing() { return this.level > 1; }
+	get is_overflowing() { return this.volume > 1; }
 
 	drain(dt_s)
 	{
 		const drain_speed = 0.1;
-		this._level -= drain_speed * dt_s;		
+		this._volume -= drain_speed * dt_s;		
 	}
 
 	update(dt_s)
@@ -26,7 +43,7 @@ class Culdron
 
 	add(color, amount)
 	{
-		this._level += amount;
+		this._volume += amount;
 		
 		if (this._color === null)
 		{
@@ -34,8 +51,26 @@ class Culdron
 		}
 		else
 		{
-			this._color = this._color.mix(color, amount / this._level);
+			this._color = this._color.mix(color, amount / this._volume);
 		}
+	}
+}
+
+class Customer
+{
+	constructor(type, min_potion, max_potion)
+	{
+		this.type = type
+		this.potion = {
+			min: min_potion,
+			max: max_potion
+		};
+	}
+
+	satisfied_with_potion(p)
+	{
+		return min_potion.volume <= p.volume && p.volume <= max_potion.volume &&
+		       min_potion.color.h <= p.color.h && p.color.h <= max_potion.color.h;
 	}
 }
 
@@ -45,10 +80,9 @@ class State
 	{
 		this.time_s = 0;
 		this.culdron = new Culdron();
+		this.customers = [];
+		this.player = new Player();
 	}
 }
 
-export { State, Culdron };
-
-// export State;
-// export Culdron;
+export { State, Culdron, Customer, Potion, Player };
