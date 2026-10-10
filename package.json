@@ -2,6 +2,10 @@
   "name": "sj26",
   "private": true,
   "type": "module",
-  "scripts": { "dev": "g dev", "bake": "g bake" },
+  "scripts": { 
+    "dev": "g dev",
+    "bake": "g bake", 
+    "test": "node bin/test.js"
+  },
   "dependencies": { "g.js": "file:deps/g.js" }
 }

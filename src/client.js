@@ -1,13 +1,19 @@
 import g from 'g.js/web';
 import State from './state.js';
+import Renderer from './renderer.js';
 
 g.web.canvas(document.getElementById('primary'));
 
 g.initialize(function ()
 {
-    g.is_running = true;
+    g.is_running = false;
 
     g.state = new State();
+
+    g.web.assets.load(asset_list, function() {
+        g.renderer = new Renderer(g.web.assets);
+        g.is_running = true;
+    });
 
     return true;
 });
@@ -21,9 +27,7 @@ g.web.draw(function (dt)
 {
     if (!g.is_running) { return; }
 
-    gl.clearColor(0.2, Math.sin(g.state.time_s), 0.25, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
+    g.renderer.draw(g.state, dt);
 });
 
 g.start();
