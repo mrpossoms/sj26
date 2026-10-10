@@ -1,0 +1,18 @@
+location: deps
+sources:
+  - repo: https://github.com/mrpossoms/g.js
+    name: g.js
+    rev: modernize
+    type: git
+    params:
+    sparse_paths:
+      -
+    links:
+      -
+    scripts:
+      -
+    patches:
+      -
+default_group: ''
+groups:
+  -
