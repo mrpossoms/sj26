@@ -3,7 +3,14 @@ class Player
 {
 	constructor()
 	{
-		this.skill = 0;
+		this.correct = 0;
+		this.incorrect = 0;
+	}
+
+	get skill()
+	{
+		if (this.correct + this.incorrect === 0) { return 0; }
+		return this.correct / (this.correct + this.incorrect);
 	}
 }
 
@@ -56,6 +63,49 @@ class Culdron
 	}
 }
 
+class Easer
+{
+	constructor(rate, transfer_func=null)
+	{
+		this._current = 0;
+		this._target = 0;
+		this._rate = rate;
+		this._transfer_func = transfer_func
+		this._finish_cb = null;
+	}
+
+	get is_done() { return this._current === this._target; }
+
+	get value() {
+		if (this._transfer_func) {
+			return this._transfer_func(this._current);
+		}
+		return this._current;
+	}
+
+	target(value) { this._target = value; return this; }
+
+	on_finish(cb) { this._finish_cb = cb; return this; }
+
+	update(dt_s)
+	{
+		const delta = this._target - this._current;
+		const step = this._rate * dt_s;
+		if (Math.abs(delta) <= step)
+		{
+			this._current = this._target;
+			if (this._finish_cb) {
+				this._finish_cb(); 
+				this._finish_cb = null; 
+			}
+		}
+		else
+		{
+			this._current += Math.sign(delta) * step;
+		}
+	}
+}
+
 class Customer
 {
 	constructor(type, min_potion, max_potion)
@@ -65,6 +115,7 @@ class Customer
 			min: min_potion,
 			max: max_potion
 		};
+		this.easer = new Easer(0.5);
 	}
 
 	satisfied_with_potion(p)

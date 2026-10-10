@@ -1,6 +1,7 @@
 import g from 'g.js/web';
-import State from './state.js';
-import Renderer from './renderer.js';
+import { State } from './state.js';
+import { Renderer } from './renderer.js';
+import { nextCustomer } from './gameplay.js';
 
 g.web.canvas(document.getElementById('primary'));
 
@@ -18,8 +19,19 @@ g.initialize(function ()
     return true;
 });
 
+
+
 g.update(function (dt)
 {
+    if (!g.is_running) { return; }
+
+    // Spawn the next customer
+    if (g.state.customers.empty()) {
+        let customer = nextCustomer(g.state);
+        customer.easer.target(1);
+        g.state.customers.push(customer);
+    }
+
     g.state.time_s += dt;
 });
 
