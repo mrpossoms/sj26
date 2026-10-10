@@ -23,7 +23,7 @@ class Renderer
         gl.disable(gl.DEPTH_TEST);
 
         this.textures = {
-			background: g.web.assets['tex/test'],
+			background: g.web.assets['tex/shop-background'],
         	stage: g.web.assets['tex/test'],
         };
 
