@@ -2,6 +2,7 @@ import g from 'g.js/web';
 import { State } from './state.js';
 import { Renderer } from './renderer.js';
 import { nextCustomer } from './gameplay.js';
+import { palette } from './palette.js';
 
 g.web.canvas(document.getElementById('primary'));
 
@@ -13,6 +14,21 @@ g.initialize(function ()
 
     g.web.assets.load(asset_list, function() {
         g.renderer = new Renderer(g.web.assets);
+
+        g.renderer.on_press("yellow_vial", function(dt) {
+            g.state.pouring_color = palette().primaries[1];
+        });
+
+        g.renderer.on_press("red_vial", function(dt) {
+            g.state.pouring_color = palette().primaries[0];
+        });
+
+        g.renderer.on_press("blue_vial", function(dt) {
+            g.state.pouring_color = palette().primaries[2];
+        });
+
+        g.renderer.on_release(function() { g.state.pouring_color = null; });
+
         g.is_running = true;
     });
 
@@ -30,6 +46,11 @@ g.update(function (dt)
         let customer = nextCustomer(g.state);
         customer.easer.target(1);
         g.state.customers.push(customer);
+    }
+
+    if (g.state.pouring_color) {
+        console.log("pouring");
+        g.state.cauldron.add(g.state.pouring_color, dt * 0.5);
     }
 
     g.state.time_s += dt;

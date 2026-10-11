@@ -1,5 +1,6 @@
 varying mediump vec2 v_uv;
 uniform sampler2D u_texture;
+uniform lowp vec4 u_tint;
 void main (void)
 {
 	// if (v_uv.x < 0.01 || v_uv.x > 0.99 ) {
@@ -12,5 +13,5 @@ void main (void)
 	// 	return;
 	// }
 
-	gl_FragColor = texture2D(u_texture, v_uv); 
+	gl_FragColor = texture2D(u_texture, v_uv) * u_tint; 
 }

@@ -10,8 +10,8 @@ class Color
 	mix(other, t)
 	{
 		var h_o = [
-			other.h - 360,
 			other.h,
+			other.h - 360,
 			other.h + 360,
 		];
 
