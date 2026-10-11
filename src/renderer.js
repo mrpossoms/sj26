@@ -72,13 +72,13 @@ const draw_fit = (tex) => {
 
 const draw_brew = (stage_model, tex, potion) => {
 	const mask_ratio = 226/300;
-
-	if (potion.color === null || potion.volume <= 0) { return stage_model; }
+	const volume = Math.min(1, potion.volume);
+	if (potion.color === null || volume <= 0) { return stage_model; }
 
     // the plane's uvs are flipped on both axes, so flip the quad to match
-    const model = stage_model.mat_mul([].translate([0, -2 + (1 - mask_ratio) * 2 * potion.volume, 0]));
+    const model = stage_model.mat_mul([].translate([0, -2 + (1 - mask_ratio) * 2 * volume, 0]));
 
-    const v = lerp(mask_ratio, 1, 1 - potion.volume);
+    const v = lerp(mask_ratio, 1, 1 - volume);
     let rgba = potion.color.RGB;
     rgba.push(1);
 
@@ -141,6 +141,7 @@ class Renderer
         this.last_pos = null;
         this.press_handlers = {};
         this.release_handler = null;
+        this.selected_vial = null;
 
         g.web.pointer.on_press(event => {
         	let p = g.web.pointer.normalized_position(event)
@@ -156,6 +157,7 @@ class Renderer
 
 				if (clicked)
 				{
+					this.selected_vial = name;
 					console.log(`name: ${name}`);
 					console.log(`\tcenter: ${center}`);
 					console.log(`\tp_local: ${p_local}`);
@@ -170,9 +172,14 @@ class Renderer
 
 		g.web.pointer.on_release(event => {
 			if (this.release_handler) { this.release_handler(); }
+			this.selected_vial = null;
 		});
 
-		this.vial_phase_shift = [Math.random(), Math.random(), Math.random()];
+		this.vial_phase_shift = {
+			"yellow_vial": Math.random(), 
+			"red_vial": Math.random(),
+			"blue_vial": Math.random()
+		};
 	}
 
 	on_press(name, cb) { this.press_handlers[name] = cb; }
@@ -203,9 +210,20 @@ class Renderer
 		draw_fit(parseInt(state.time_s * 10) % 2 == 0 ? this.textures.cauldron_fire2 : this.textures.cauldron_fire);
 
     	const W = g.web.gfx.width(), H = g.web.gfx.height();
-		this.transforms['red_vial'] = draw_vial(this.textures.red_vial, stage_model, [-250 / W, 1.25], Math.cos(state.time_s + this.vial_phase_shift[0]) * 0.1);
-		this.transforms['blue_vial'] = draw_vial(this.textures.blue_vial, stage_model, [250 / W, 1.25], Math.cos(state.time_s + this.vial_phase_shift[1]) * 0.1);
-		this.transforms['yellow_vial'] = draw_vial(this.textures.yellow_vial, stage_model, [0 / W, 1.25], Math.cos(state.time_s + this.vial_phase_shift[2]) * 0.1);
+
+    	const sway_speeds = [
+    		this.selected_vial === 'red_vial' ? 0 : 0.1,
+    		this.selected_vial === 'blue_vial' ? 0 : 0.1,
+    		this.selected_vial === 'yellow_vial' ? 0 : 0.1
+    	];
+
+    	if (this.selected_vial) {
+    		this.vial_phase_shift[this.selected_vial] = -state.time_s;
+    	}
+
+		this.transforms['red_vial'] = draw_vial(this.textures.red_vial, stage_model, [-250 / W, 1.25], Math.sin(state.time_s + this.vial_phase_shift['red_vial']) * 0.1);
+		this.transforms['blue_vial'] = draw_vial(this.textures.blue_vial, stage_model, [250 / W, 1.25], Math.sin(state.time_s + this.vial_phase_shift['blue_vial']) * 0.1);
+		this.transforms['yellow_vial'] = draw_vial(this.textures.yellow_vial, stage_model, [0 / W, 1.25], Math.sin(state.time_s + this.vial_phase_shift['yellow_vial']) * 0.1);
 	}
 }
 
