@@ -14,6 +14,8 @@ const draw_region = (tex, p, s, uv) => {
         .set_uniform('u_uv').vec4(uv)
         .set_uniform('u_texture').texture(tex)
         .draw_tri_fan();
+
+    return model;
 };
 
 const draw_fit = (tex) => {
@@ -39,6 +41,21 @@ class Renderer
 	            g.web.assets['shaders/sprite.frag']
 	        )
         };
+
+        this.transforms = [];
+
+        g.web.pointer.on_press(event => {
+
+		});
+
+		g.web.pointer.on_release(event => {
+
+		});
+	}
+
+	draw_fit(name)
+	{
+		this.transforms[name] = draw_fit(this.textures[name]);
 	}
 
 	draw(state, dt)
@@ -48,10 +65,10 @@ class Renderer
 		gl.clearColor(0.2, 0.0, 0.25, 1);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-		draw_fit(this.textures.background);
-		draw_fit(this.textures.stage);
-		draw_fit(this.textures.cauldron);
-		draw_fit(this.textures.primary_vials);
+		this.draw_fit("background");
+		this.draw_fit("stage");
+		this.draw_fit("cauldron");
+		this.draw_fit("primary_vials");
 	}
 }
 
