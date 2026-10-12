@@ -175,6 +175,7 @@ class State
 		this.customers = [];
 		this.pouring_color = null;
 		this.player = new Player();
+		this.intro_easer = new Easer(0, 1);
 	}
 }
 

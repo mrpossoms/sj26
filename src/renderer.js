@@ -97,6 +97,7 @@ class Renderer
         	cauldron_fire: g.web.assets['tex/cauldron-fire'],
         	cauldron_fire2: g.web.assets['tex/cauldron-fire-2'],
         	request_bubble: g.web.assets['tex/customer-request-bubble'],
+        	intro: g.web.assets['tex/intro-card'],
         	spooks: {
         		dracula: {
         			happy: g.web.assets['tex/customer-dracula-happy'],
@@ -185,20 +186,21 @@ class Renderer
 	{
 		const customer = state.customers.last();
 
-		if (!customer) { return; }
+		if (customer) {
+			let tex = this.textures.spooks[customer.type].sad;
+			let pos = [customer.easer.value * 500, 0];
+			if (customer.satisfied_with_potion(state.cauldron.potion)) {
+				tex = this.textures.spooks[customer.type].happy;
+				pos = [customer.easer.value * 500 + Math.cos(state.time_s * 2) * 10, Math.sin(state.time_s * 20) * 4];
+			}
 
-		let tex = this.textures.spooks[customer.type].sad;
-		let pos = [customer.easer.value * 500, 0];
-		if (customer.satisfied_with_potion(state.cauldron.potion)) {
-			tex = this.textures.spooks[customer.type].happy;
-			pos = [customer.easer.value * 500 + Math.cos(state.time_s * 2) * 10, Math.sin(state.time_s * 20) * 4];
+			draw_region(tex, pos, [g.web.gfx.width() * (1/g.web.gfx.aspect()), g.web.gfx.height()], [0, 0, 1, 1]);			
 		}
 
-		draw_region(tex, pos, [g.web.gfx.width() * (1/g.web.gfx.aspect()), g.web.gfx.height()], [0, 0, 1, 1]);
+		let stage_model = draw_fit(this.textures.stage);
 
-		let tint = [1,0,0,1]
-
-		if (customer.easer.is_done) {
+		if (customer && customer.easer.is_done) {
+			let tint = [1,0,0,1]
 			if (customer.potion.min.color === null || customer.potion.max.color === null) {
 				let rgb = (new Color((state.time_s * 360) % 359, 1, 1)).RGB;
 				tint = [rgb[0], rgb[1], rgb[2], 1];
@@ -209,6 +211,8 @@ class Renderer
 
 			draw_fit(this.textures.request_bubble, tint);
 		}
+
+		return stage_model;
 	}
 
 	draw_cauldron(state, stage_model)
@@ -243,10 +247,8 @@ class Renderer
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 		draw_fit(this.textures.background);
-		this.draw_customer(state)
+		let stage_model = this.draw_customer(state)
 		
-		let stage_model = draw_fit(this.textures.stage);
-
 		this.draw_cauldron(state, stage_model);
 
     	const W = g.web.gfx.width(), H = g.web.gfx.height();
@@ -261,9 +263,14 @@ class Renderer
     		this.vial_phase_shift[this.selected_vial] = -state.time_s;
     	}
 
-		this.transforms['red_vial'] = draw_vial(this.textures.red_vial, stage_model, [-250 / W, 1.25], Math.sin(state.time_s + this.vial_phase_shift['red_vial']) * 0.1);
-		this.transforms['blue_vial'] = draw_vial(this.textures.blue_vial, stage_model, [250 / W, 1.25], Math.sin(state.time_s + this.vial_phase_shift['blue_vial']) * 0.1);
-		this.transforms['yellow_vial'] = draw_vial(this.textures.yellow_vial, stage_model, [0 / W, 1.25], Math.sin(state.time_s + this.vial_phase_shift['yellow_vial']) * 0.1);
+		this.transforms['red_vial'] = draw_vial(this.textures.red_vial, stage_model, [-250 / W, 1.25], Math.sin(state.time_s + this.vial_phase_shift['red_vial']) * 0.02);
+		this.transforms['blue_vial'] = draw_vial(this.textures.blue_vial, stage_model, [250 / W, 1.25], Math.sin(state.time_s + this.vial_phase_shift['blue_vial']) * 0.02);
+		this.transforms['yellow_vial'] = draw_vial(this.textures.yellow_vial, stage_model, [0 / W, 1.25], Math.sin(state.time_s + this.vial_phase_shift['yellow_vial']) * 0.02);
+	
+		if (!state.intro_easer.is_done || state.intro_easer.value == 0) 
+		{
+			this.transforms['intro'] = draw_region(this.textures.intro, [0, state.intro_easer.value * 1000], [g.web.gfx.width() * (1/g.web.gfx.aspect()), g.web.gfx.height()], [0, 0, 1, 1]);
+		}
 	}
 }
 

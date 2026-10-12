@@ -39,7 +39,7 @@ function submitBrew(state)
 	state.cauldron.drain();
 
 	if (state.customers.length == 0) { return; }
-
+	if (state.cauldron.potion.volume == 0) { return; }
 	
 	if (state.customers.last().satisfied_with_potion(state.cauldron.potion)) {
 		state.player.correct += 1

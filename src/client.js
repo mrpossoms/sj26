@@ -27,6 +27,11 @@ g.initialize(function ()
             g.state.pouring_color = palette().primaries[2];
         });
 
+        g.renderer.on_press("intro", function(dt) {
+            g.state.intro_easer.target(1);
+            console.log("intro");
+        });
+
         g.renderer.on_press("brew", function(dt) {
             console.log("brew");
             submitBrew(g.state);
@@ -68,6 +73,7 @@ g.update(function (dt)
     }
 
     g.state.cauldron.update(dt);
+    g.state.intro_easer.update(dt);
     g.state.time_s += dt;
 });
 
