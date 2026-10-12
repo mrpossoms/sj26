@@ -67,9 +67,9 @@ class Cauldron
 
 class Easer
 {
-	constructor(rate, transfer_func=null)
+	constructor(value, rate, transfer_func=null)
 	{
-		this._current = 0;
+		this._current = value;
 		this._target = 0;
 		this._rate = rate;
 		this._transfer_func = transfer_func
@@ -117,15 +117,26 @@ class Customer
 			min: min_potion,
 			max: max_potion
 		};
-		this.easer = new Easer(0.5);
+		this.easer = new Easer(-1, 0.5);
+	}
+
+	static get types()
+	{
+		return ["dracula", "ghost", "mummy", "pumpkin"];
 	}
 
 	satisfied_with_potion(p)
 	{
+		if (p.color === null) { return false; }
 		if (this.potion.min.color === null || this.potion.max.color === null) { return true; }
 
 		return this.potion.min.volume <= p.volume && p.volume <= this.potion.max.volume &&
 		       this.potion.min.color.h <= p.color.h && p.color.h <= this.potion.max.color.h;
+	}
+
+	update(dt)
+	{
+		this.easer.update(dt);
 	}
 }
 

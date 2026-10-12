@@ -2,7 +2,7 @@ class Color
 {
 	constructor(h, s, v)
 	{
-		this.h = h;
+		this.h = Math.min(Math.max(h, 0), 359);
 		this.s = s;
 		this.v = v;
 	}
@@ -23,6 +23,8 @@ class Color
 
 		while(h < 0) h += 360;
 		while(h > 360) h -= 360;
+
+		h = Math.min(Math.max(h, 0), 359);
 
 		const s = this.s * (1 - t) + other.s * t;
 		const v = this.v * (1 - t) + other.v * t;
@@ -51,10 +53,16 @@ class Color
 	get RGB()
 	{
 		let c = this.v * this.s;
-		let h_prime = this.h / 60;
+		let h_prime = parseInt(this.h / 60);
 
 		let x = c * (1 - Math.abs((this.h / 60) % 2 - 1));
 		let m = this.v - c;
+
+		// const h_prime_in_range = h_prime >= 0 && h_prime <= 5;
+		// if (!h_prime_in_range) {
+		// 	debugger;
+		// }
+		// console.assert(h_prime_in_range, `h_prime is out of range: ${h_prime}`);
 
 		return [
 			[c, x, 0],
@@ -63,7 +71,7 @@ class Color
 			[0, x, c],
 			[x, 0, c],
 			[c, 0, x]
-		][parseInt(h_prime)];
+		][h_prime];
 	}
 }
 

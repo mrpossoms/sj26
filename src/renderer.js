@@ -1,9 +1,10 @@
 import g from 'g.js/web';
 import { State } from './state.js';
+import { Color } from './color.js';
 
 const lerp = (a, b, t) => a + (b - a) * t;
 
-const draw_region = (tex, p, s, uv) => {
+const draw_region = (tex, p, s, uv, tint=[1,1,1,1]) => {
     const W = g.web.gfx.width(), H = g.web.gfx.height();
     // the plane's uvs are flipped on both axes, so flip the quad to match
     const model = [].mat_scale([-s[0] / W, -s[1] / H, 1])
@@ -14,26 +15,7 @@ const draw_region = (tex, p, s, uv) => {
         .with_attribute({name:'a_tex_coord', buffer: 'texture_coords', components: 2})
         .set_uniform('u_model').mat4(model)
         .set_uniform('u_uv').vec4(uv)
-        .set_uniform('u_tint').vec4([1, 1, 1, 1])
-        .set_uniform('u_texture').texture(tex)
-        .draw_tri_fan();
-
-    return model;
-};
-
-const draw_region_ncd = (tex, p, s, t, uv) => {
-    const W = g.web.gfx.width(), H = g.web.gfx.height();
-    // the plane's uvs are flipped on both axes, so flip the quad to match
-    const model = [].mat_scale([-s[0] * tex.width / W, -s[1] * tex.height / H, 1])
-    				.mat_mul([].rotation([0, 0, 1], t))
-                    .mat_mul([].translate([p[0], p[1], 0]));
-
-    g.web.assets['mesh/plane'].using_shader('sprite')
-        .with_attribute({name:'a_position', buffer: 'positions', components: 3})
-        .with_attribute({name:'a_tex_coord', buffer: 'texture_coords', components: 2})
-        .set_uniform('u_model').mat4(model)
-        .set_uniform('u_uv').vec4(uv)
-        .set_uniform('u_tint').vec4([1, 1, 1, 1])
+        .set_uniform('u_tint').vec4(tint)
         .set_uniform('u_texture').texture(tex)
         .draw_tri_fan();
 
@@ -66,8 +48,8 @@ const draw_vial = (tex, stage_model, p, t) => {
     return model;
 };
 
-const draw_fit = (tex) => {
-	return draw_region(tex, [0, 0], [g.web.gfx.width() * (1/g.web.gfx.aspect()), g.web.gfx.height()], [0, 0, 1, 1]);
+const draw_fit = (tex, tint) => {
+	return draw_region(tex, [0, 0], [g.web.gfx.width() * (1/g.web.gfx.aspect()), g.web.gfx.height()], [0, 0, 1, 1], tint);
 };
 
 const draw_brew = (stage_model, tex, potion) => {
@@ -110,6 +92,7 @@ class Renderer
         	cauldron_mask: g.web.assets['tex/cauldron-mask'],
         	cauldron_fire: g.web.assets['tex/cauldron-fire'],
         	cauldron_fire2: g.web.assets['tex/cauldron-fire-2'],
+        	request_bubble: g.web.assets['tex/customer-request-bubble'],
         	spooks: {
         		dracula: {
         			happy: g.web.assets['tex/customer-dracula-happy'],
@@ -124,8 +107,8 @@ class Renderer
 					sad: g.web.assets['tex/customer-mummy']
 				},
 				pumpkin: {
-					happy: g.web.assets['tex/customer-pumpkin-happy'],
-					sad: g.web.assets['tex/customer-pumpkin']
+					happy: g.web.assets['tex/customer-pumpkin-head-happy'],
+					sad: g.web.assets['tex/customer-pumpkin-head']
 				}
         	}
         };
@@ -149,8 +132,6 @@ class Renderer
         	console.log(`pos: ${p}`);
 
         	for (let [name, model] of Object.entries(this.transforms)) {
-        		let center = [[0, 0, 0, 1]].mat_mul(model)[0];
-
         		let inv_model = model.inverse();
 				let p_local = [[p[0], p[1], 0, 1]].mat_mul(inv_model)[0];
 				let clicked = p_local[0] >= -1 && p_local[0] <= 1 && p_local[1] >= -1 && p_local[1] <= 1;
@@ -159,7 +140,6 @@ class Renderer
 				{
 					this.selected_vial = name;
 					console.log(`name: ${name}`);
-					console.log(`\tcenter: ${center}`);
 					console.log(`\tp_local: ${p_local}`);
 					console.log(`\tClicked!`);	
 
@@ -186,6 +166,33 @@ class Renderer
 
 	on_release(cb) { this.release_handler = cb; }
 
+	draw_customer(state)
+	{
+		const customer = state.customers.last();
+
+		if (!customer) { return; }
+
+		let tex = this.textures.spooks[customer.type].sad;
+		let pos = [customer.easer.value * 500, 0];
+		if (customer.satisfied_with_potion(state.cauldron.potion)) {
+			tex = this.textures.spooks[customer.type].happy;
+			pos = [Math.cos(state.time_s * 2) * 10, Math.sin(state.time_s * 20) * 4];
+		}
+
+		draw_region(tex, pos, [g.web.gfx.width() * (1/g.web.gfx.aspect()), g.web.gfx.height()], [0, 0, 1, 1]);
+
+		let tint = [1,0,0,1]
+
+		if (customer.easer.is_done) {
+			if (customer.potion.min.color === null || customer.potion.max.color === null) {
+				let rgb = (new Color((state.time_s * 360) % 359, 1, 1)).RGB;
+				tint = [rgb[0], rgb[1], rgb[2], 1];
+			}
+
+			draw_fit(this.textures.request_bubble, tint);
+		}
+	}
+
 	draw(state, dt)
 	{
 		if (!state) { return; }
@@ -194,17 +201,12 @@ class Renderer
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 		draw_fit(this.textures.background);
-
-		if (state.customers.last().satisfied_with_potion(state.cauldron.potion)) {
-			draw_fit(this.textures.spooks[state.customers.last().type].happy);
-		} else {
-			draw_fit(this.textures.spooks[state.customers.last().type].sad);
-		}
+		this.draw_customer(state)
 		
 		let stage_model = draw_fit(this.textures.stage);
 
 		let potion = state.cauldron.potion;
-		draw_brew(stage_model, this.textures.cauldron_mask, potion);
+		this.transforms['brew'] = draw_brew(stage_model, this.textures.cauldron_mask, potion);
 
 		draw_fit(this.textures.cauldron);
 		draw_fit(parseInt(state.time_s * 10) % 2 == 0 ? this.textures.cauldron_fire2 : this.textures.cauldron_fire);

@@ -30,7 +30,7 @@ function nextCustomer(state)
 	const maxPotion = new Potion(maxColor, 1);
 
 	// TODO: choose spook name
-	return new Customer('ghost', minPotion, maxPotion);
+	return new Customer(Customer.types.pick(), minPotion, maxPotion);
 }
 
 function submitBrew(state)

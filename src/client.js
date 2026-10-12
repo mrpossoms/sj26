@@ -27,6 +27,10 @@ g.initialize(function ()
             g.state.pouring_color = palette().primaries[2];
         });
 
+        g.renderer.on_press("brew", function(dt) {
+            console.log("brew");
+        });
+
         g.renderer.on_release(function() { g.state.pouring_color = null; });
 
         g.is_running = true;
@@ -44,8 +48,10 @@ g.update(function (dt)
     // Spawn the next customer
     if (g.state.customers.empty()) {
         let customer = nextCustomer(g.state);
-        customer.easer.target(1);
+        customer.easer.target(0);
         g.state.customers.push(customer);
+    } else {
+        g.state.customers.last().update(dt);
     }
 
     if (g.state.pouring_color) {
