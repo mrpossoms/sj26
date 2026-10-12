@@ -17,14 +17,17 @@ g.initialize(function ()
 
         g.renderer.on_press("yellow_vial", function(dt) {
             g.state.pouring_color = palette().primaries[1];
+            g.state.pouring_name = "yellow_vial";
         });
 
         g.renderer.on_press("red_vial", function(dt) {
             g.state.pouring_color = palette().primaries[0];
+            g.state.pouring_name = "red_vial";
         });
 
         g.renderer.on_press("blue_vial", function(dt) {
             g.state.pouring_color = palette().primaries[2];
+            g.state.pouring_name = "blue_vial";
         });
 
         g.renderer.on_press("intro", function(dt) {
@@ -40,7 +43,10 @@ g.initialize(function ()
 
         g.song = new g.web.assets['sound/spooky-kitchen-background']([0,0,0]);
 
-        g.renderer.on_release(function() { g.state.pouring_color = null; });
+        g.renderer.on_release(function() { 
+            g.state.pouring_color = null;
+            g.state.pouring_name = null;
+        });
 
         g.is_running = true;
     });
@@ -69,7 +75,10 @@ g.update(function (dt)
 
     if (g.state.pouring_color) {
         console.log("pouring");
-        g.state.cauldron.add(g.state.pouring_color, dt * 0.5);
+        let color = g.state.pouring_color;
+        g.renderer.spawn_drop(g.state, g.state.pouring_color, g.state.pouring_name, function() {
+            g.state.cauldron.add(color, dt * 0.5);
+        });
     }
 
     if (g.state.cauldron.is_overflowing) {

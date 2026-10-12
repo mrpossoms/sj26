@@ -4,6 +4,28 @@ import { Color } from './color.js';
 
 const lerp = (a, b, t) => a + (b - a) * t;
 
+class Drop
+{
+	constructor(pos, color, on_despawn)
+	{
+		this._pos = pos;
+		this._vel = [0, 0];
+		this.on_despawn = on_despawn;
+
+		let rgb = color.RGB;
+		this.rgba = [rgb[0], rgb[1], rgb[2], 1];
+	}
+
+	update(dt_s)
+	{
+		this._vel = this._vel.add([0, -dt_s * 4]);
+		this._pos = this._pos.add(this._vel.mul(dt_s));
+		return this;
+	}
+
+	get pos() { return this._pos; }
+}
+
 const draw_textured_quad = (tex, model, uv, tint=[1,1,1,1]) => {
     g.web.assets['mesh/plane'].using_shader('sprite')
         .with_attribute({name:'a_position', buffer: 'positions', components: 3})
@@ -122,6 +144,10 @@ class Renderer
         	sprite: g.web.gfx.shader.create('sprite',
 	            g.web.assets['shaders/sprite.vert'],
 	            g.web.assets['shaders/sprite.frag']
+	        ),
+	        drop: g.web.gfx.shader.create('drop',
+	            g.web.assets['shaders/sprite.vert'],
+	            g.web.assets['shaders/drop.frag']
 	        )
         };
 
@@ -130,6 +156,7 @@ class Renderer
         this.press_handlers = {};
         this.release_handler = null;
         this.selected_vial = null;
+        this.drops = [];
 
         g.web.pointer.on_press(event => {
         	let p = g.web.pointer.normalized_position(event)
@@ -244,6 +271,52 @@ class Renderer
 		draw_textured_quad(parseInt(state.time_s * 10) % 2 == 0 ? this.textures.cauldron_fire2 : this.textures.cauldron_fire, [].mat_scale([-s[0] / W, -s[1] / H, 1]), [0, 0, 1, 1]);
 	}
 
+	spawn_drop(state, color, name, on_despawn)
+	{
+		this.drops.push(new Drop(this.vialPosition(name).add([0, -0.75]), color, on_despawn));
+	}
+
+	draw_drops(state, stage_model, dt)
+	{
+		for (var i = 0; i < this.drops.length; i++) {
+			let drop = this.drops[i].update(dt);
+
+			if (drop.pos[1] < -0.95) {
+				this.drops[i].on_despawn();
+				this.drops[i] = this.drops[this.drops.length-1];
+				this.drops.pop();
+				continue;
+			}
+
+			const model = stage_model
+							.mat_mul([].mat_scale([0.02, 0.04, 1]))
+							.mat_mul([].translate([drop.pos[0], drop.pos[1], 0]));
+
+		    g.web.assets['mesh/plane'].using_shader('drop')
+		        .with_attribute({name:'a_position', buffer: 'positions', components: 3})
+		        .with_attribute({name:'a_tex_coord', buffer: 'texture_coords', components: 2})
+		        .set_uniform('u_model').mat4(model)
+		        .set_uniform('u_tint').vec4(drop.rgba)
+		        .draw_tri_fan();
+		}
+	}
+
+	vialPosition(name)
+	{
+    	const W = g.web.gfx.width();
+
+		switch(name) {
+		case 'red_vial':
+			return [-250 / W, 1.25];
+		case 'blue_vial':
+			return [250 / W, 1.25];
+		case 'yellow_vial':
+			return [0, 1.25];
+		default:
+			return null;
+		}
+	}
+
 	draw(state, dt)
 	{
 		if (!state) { return; }
@@ -254,9 +327,9 @@ class Renderer
 		draw_fit(this.textures.background);
 		let stage_model = this.draw_customer(state)
 		
-		this.draw_cauldron(state, stage_model);
+		this.draw_drops(state, stage_model, dt);
 
-    	const W = g.web.gfx.width(), H = g.web.gfx.height();
+		this.draw_cauldron(state, stage_model);
 
     	const sway_speeds = [
     		this.selected_vial === 'red_vial' ? 0 : 0.1,
@@ -268,10 +341,17 @@ class Renderer
     		this.vial_phase_shift[this.selected_vial] = -state.time_s;
     	}
 
-		this.transforms['red_vial'] = draw_vial(this.textures.red_vial, stage_model, [-250 / W, 1.25], Math.sin(state.time_s + this.vial_phase_shift['red_vial']) * 0.02);
-		this.transforms['blue_vial'] = draw_vial(this.textures.blue_vial, stage_model, [250 / W, 1.25], Math.sin(state.time_s + this.vial_phase_shift['blue_vial']) * 0.02);
-		this.transforms['yellow_vial'] = draw_vial(this.textures.yellow_vial, stage_model, [0 / W, 1.25], Math.sin(state.time_s + this.vial_phase_shift['yellow_vial']) * 0.02);
-	
+    	let names = ['red_vial', 'blue_vial', 'yellow_vial']
+    	for (var i = 0; i < 3; i++) {
+    		const name = names[i];
+			this.transforms[name] = draw_vial(
+				this.textures[name], 
+				stage_model, 
+				this.vialPosition(name), 
+				Math.sin(state.time_s + this.vial_phase_shift[name]) * 0.02
+			);	
+    	}
+
 		if (!state.intro_easer.is_done || state.intro_easer.value == 0) 
 		{
 			this.transforms['intro'] = draw_region(this.textures.intro, [0, state.intro_easer.value * 1000], [g.web.gfx.width() * (1/g.web.gfx.aspect()), g.web.gfx.height()], [0, 0, 1, 1]);
