@@ -1,7 +1,7 @@
 import g from 'g.js/web';
 import { State } from './state.js';
 import { Renderer } from './renderer.js';
-import { nextCustomer } from './gameplay.js';
+import { nextCustomer, submitBrew } from './gameplay.js';
 import { palette } from './palette.js';
 
 g.web.canvas(document.getElementById('primary'));
@@ -29,7 +29,11 @@ g.initialize(function ()
 
         g.renderer.on_press("brew", function(dt) {
             console.log("brew");
+            submitBrew(g.state);
         });
+
+
+        g.song = new g.web.assets['sound/spooky-kitchen-background']([0,0,0]);
 
         g.renderer.on_release(function() { g.state.pouring_color = null; });
 
@@ -52,6 +56,10 @@ g.update(function (dt)
         g.state.customers.push(customer);
     } else {
         g.state.customers.last().update(dt);
+
+        if (g.state.customers.last().has_left) {
+            g.state.customers.pop();
+        }
     }
 
     if (g.state.pouring_color) {
@@ -59,6 +67,7 @@ g.update(function (dt)
         g.state.cauldron.add(g.state.pouring_color, dt * 0.5);
     }
 
+    g.state.cauldron.update(dt);
     g.state.time_s += dt;
 });
 

@@ -7,10 +7,15 @@ class Player
 		this.incorrect = 0;
 	}
 
+	get _confidence()
+	{
+		return Math.min(1, (this.correct + this.incorrect) / 10);
+	}
+
 	get skill()
 	{
 		if (this.correct + this.incorrect === 0) { return 0; }
-		return this.correct / (this.correct + this.incorrect);
+		return this._confidence * this.correct / (this.correct + this.incorrect);
 	}
 }
 
@@ -29,6 +34,7 @@ class Cauldron
 	{
 		this._color = null;
 		this._volume = 0;
+		this._draining = false;
 	}
 
 	get color() { return this._color; }
@@ -39,15 +45,22 @@ class Cauldron
 
 	get is_overflowing() { return this.volume > 1; }
 
-	drain(dt_s)
-	{
-		const drain_speed = 0.1;
-		this._volume -= drain_speed * dt_s;		
-	}
+	drain() { this._draining = true; }
 
 	update(dt_s)
 	{
 		if (this.is_overflowing) { this.drain(); }
+
+		if (this._draining) {
+			const drain_speed = 1;
+			this._volume -= drain_speed * dt_s;
+
+			if (this._volume < 0) {
+				this._volume = 0;
+				this._color = null;
+				this._draining = false;
+			}
+		}
 	}
 
 	add(color, amount)
@@ -110,19 +123,26 @@ class Easer
 
 class Customer
 {
-	constructor(type, min_potion, max_potion)
+	constructor(type, min_potion, target_potion, max_potion)
 	{
 		this.type = type
 		this.potion = {
 			min: min_potion,
+			target: target_potion,
 			max: max_potion
 		};
-		this.easer = new Easer(-1, 0.5);
+		this.easer = new Easer(-1, 2);
+		this.is_leaving = false;
 	}
 
 	static get types()
 	{
 		return ["dracula", "ghost", "mummy", "pumpkin"];
+	}
+
+	get has_left()
+	{
+		return this.easer.is_done && this.is_leaving;
 	}
 
 	satisfied_with_potion(p)
@@ -132,6 +152,12 @@ class Customer
 
 		return this.potion.min.volume <= p.volume && p.volume <= this.potion.max.volume &&
 		       this.potion.min.color.h <= p.color.h && p.color.h <= this.potion.max.color.h;
+	}
+
+	leave()
+	{
+		this.is_leaving = true;
+		this.easer.target(1);
 	}
 
 	update(dt)

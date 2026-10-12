@@ -27,20 +27,29 @@ function nextCustomer(state)
 
 	// TODO: if we want volume to be part of the target, replace 0 and 1 with something skill derived
 	const minPotion = new Potion(minColor, 0);
+	const nominalPotion = new Potion(color, 0.5);
 	const maxPotion = new Potion(maxColor, 1);
 
 	// TODO: choose spook name
-	return new Customer(Customer.types.pick(), minPotion, maxPotion);
+	return new Customer(Customer.types.pick(), minPotion, nominalPotion, maxPotion);
 }
 
 function submitBrew(state)
 {
+	state.cauldron.drain();
+
 	if (state.customers.length == 0) { return; }
 
-	if (state.customers.last().satisfied_with_potion(state.culdron)) {
+	
+	if (state.customers.last().satisfied_with_potion(state.cauldron.potion)) {
 		state.player.correct += 1
-		state.customers.pop();
+		state.customers.last().leave();
+	} else {
+		state.player.incorrect += 1;
+		state.customers.last().leave();
 	}
+
+	console.log(`Player skill: ${state.player.skill}`);
 }
 
 export { nextCustomer, submitBrew };
