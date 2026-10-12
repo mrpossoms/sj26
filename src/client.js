@@ -72,6 +72,10 @@ g.update(function (dt)
         g.state.cauldron.add(g.state.pouring_color, dt * 0.5);
     }
 
+    if (g.state.cauldron.is_overflowing) {
+        submitBrew(g.state);
+    }
+
     g.state.cauldron.update(dt);
     g.state.intro_easer.update(dt);
     g.state.time_s += dt;

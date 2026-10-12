@@ -3,7 +3,7 @@ class Player
 {
 	constructor()
 	{
-		this.correct = 0;
+		this.correct = 4; // TODO: reset
 		this.incorrect = 0;
 	}
 
@@ -49,8 +49,6 @@ class Cauldron
 
 	update(dt_s)
 	{
-		if (this.is_overflowing) { this.drain(); }
-
 		if (this._draining) {
 			const drain_speed = 1;
 			this._volume -= drain_speed * dt_s;
@@ -75,6 +73,8 @@ class Cauldron
 		{
 			this._color = this._color.mix(color, amount / this._volume);
 		}
+
+		console.log(`Cauldron: Added color ${color.h}, amount ${amount}, new volume ${this._volume}, new color ${this._color.h}`);
 	}
 }
 
@@ -145,13 +145,28 @@ class Customer
 		return this.easer.is_done && this.is_leaving;
 	}
 
+	h_within_range(p)
+	{
+		let min = Math.min(this.potion.min.color.h, this.potion.max.color.h);
+		let max = Math.max(this.potion.min.color.h, this.potion.max.color.h);
+		let spreads = [
+			max - min,
+			min + (360 - max),
+		];
+
+		if (spreads[0] < spreads[1]) {
+			return min <= p.color.h && p.color.h <= max;
+		} else {
+			return p.color.h <= min || p.color.h >= max;
+		}
+	}
+
 	satisfied_with_potion(p)
 	{
 		if (p.color === null) { return false; }
 		if (this.potion.min.color === null || this.potion.max.color === null) { return true; }
 
-		return this.potion.min.volume <= p.volume && p.volume <= this.potion.max.volume &&
-		       this.potion.min.color.h <= p.color.h && p.color.h <= this.potion.max.color.h;
+		return this.potion.min.volume <= p.volume && p.volume <= this.potion.max.volume && this.h_within_range(p);
 	}
 
 	leave()

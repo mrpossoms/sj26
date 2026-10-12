@@ -1,8 +1,15 @@
+function wrap(h)
+{
+	while(h < 0) h += 360;
+	while(h >= 360) h -= 360;
+	return h
+}
+
 class Color
 {
 	constructor(h, s, v)
 	{
-		this.h = Math.min(Math.max(h, 0), 359);
+		this.h = wrap(h);
 		this.s = s;
 		this.v = v;
 	}
@@ -21,10 +28,7 @@ class Color
 
 		var h = this.h * (1 - t) + h_o * t;
 
-		while(h < 0) h += 360;
-		while(h > 360) h -= 360;
-
-		h = Math.min(Math.max(h, 0), 359);
+		h = wrap(h);
 
 		const s = this.s * (1 - t) + other.s * t;
 		const v = this.v * (1 - t) + other.v * t;

@@ -134,7 +134,6 @@ class Renderer
         g.web.pointer.on_press(event => {
         	let p = g.web.pointer.normalized_position(event)
         	this.last_pos = p;
-        	console.log(`pos: ${p}`);
 
 			if (g.song) {
 				g.song.play();			
@@ -149,7 +148,6 @@ class Renderer
 				{
 					this.selected_vial = name;
 					console.log(`name: ${name}`);
-					console.log(`\tp_local: ${p_local}`);
 					console.log(`\tClicked!`);	
 
 					if (this.press_handlers[name]) {
@@ -197,15 +195,21 @@ class Renderer
 			draw_region(tex, pos, [g.web.gfx.width() * (1/g.web.gfx.aspect()), g.web.gfx.height()], [0, 0, 1, 1]);			
 		}
 
+		// TODO: Move out with request bubble
 		let stage_model = draw_fit(this.textures.stage);
 
+		// TODO: this is better suited as its own function, but for now it's here
 		if (customer && customer.easer.is_done) {
 			let tint = [1,0,0,1]
 			if (customer.potion.min.color === null || customer.potion.max.color === null) {
+				// rainbow tint effect
 				let rgb = (new Color((state.time_s * 360) % 359, 1, 1)).RGB;
 				tint = [rgb[0], rgb[1], rgb[2], 1];
 			} else {
-				let rgb = customer.potion.target.color.RGB;
+				// Range tint efect
+				// let rgb = customer.potion.target.color.RGB;
+				let acceptable_color = customer.potion.min.color.mix(customer.potion.max.color, Math.cos(state.time_s * 2) * 0.5 + 0.5);
+				let rgb = acceptable_color.RGB;
 				tint = [rgb[0], rgb[1], rgb[2], 1];
 			}
 
@@ -225,6 +229,7 @@ class Renderer
 
 		if (potion.volume > 0) {
 			p = [20*(Math.random()-0.5)/W,10*(Math.random()-0.5)/H];
+			p = p.mul(potion.volume);
 		}
 
 	    // the plane's uvs are flipped on both axes, so flip the quad to match

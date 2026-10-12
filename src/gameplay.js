@@ -6,7 +6,9 @@ function nextCustomer(state)
 {
 	const skill = state.player.skill;
 	var color = null;
-	var tolerance = 1 - skill;
+	var tolerance = Math.max(0.05, 1 - skill) * 0.5;
+
+	console.log(`toerance: ${tolerance}`);
 
 	if (skill < 0.25) {
 		// We don't care what color they choose
@@ -21,8 +23,10 @@ function nextCustomer(state)
 	var minColor = null, maxColor = null;
 
 	if (color) {
-		minColor = new Color(color.h - tolerance * 360, color.s - tolerance, color.v - tolerance);
-		maxColor = new Color(color.h + tolerance * 360, color.s + tolerance, color.v + tolerance);
+		const max_spread = 90;
+		minColor = new Color(color.h - tolerance * max_spread, color.s, color.v);
+		maxColor = new Color(color.h + tolerance * max_spread, color.s, color.v);
+		console.log(`Customer target color: ${color.h}, tolerance: ${tolerance * max_spread}, min: ${minColor.h}, max: ${maxColor.h}`);
 	}
 
 	// TODO: if we want volume to be part of the target, replace 0 and 1 with something skill derived
@@ -30,7 +34,6 @@ function nextCustomer(state)
 	const nominalPotion = new Potion(color, 0.5);
 	const maxPotion = new Potion(maxColor, 1);
 
-	// TODO: choose spook name
 	return new Customer(Customer.types.pick(), minPotion, nominalPotion, maxPotion);
 }
 
