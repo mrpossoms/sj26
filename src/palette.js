@@ -3,7 +3,7 @@ import { Color } from '../src/color.js';
 let g_palette = {
 	primaries: [
 		new Color(0, 1, 1),   // red
-		new Color(60, 1, 1),  // yellow
+		new Color(61, 1, 1),  // yellow
 		new Color(240, 1, 1)  // blue
 	],
 	secondaries: [
