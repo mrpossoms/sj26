@@ -75,7 +75,7 @@ const draw_vial = (tex, stage_model, p, t) => {
 };
 
 const draw_fit = (tex, tint) => {
-	return draw_region(tex, [0, 0], [g.web.gfx.width() * (1/g.web.gfx.aspect()), g.web.gfx.height()], [0, 0, 1, 1], tint);
+	return draw_region(tex, [0, 0], [g.web.gfx.width() / g.web.gfx.aspect(), g.web.gfx.height()], [0, 0, 1, 1], tint);
 };
 
 const draw_brew = (stage_model, pos, tex, potion) => {
@@ -145,9 +145,9 @@ class Renderer
 	            g.web.assets['shaders/sprite.vert'],
 	            g.web.assets['shaders/sprite.frag']
 	        ),
-	        drop: g.web.gfx.shader.create('drop',
+	        tint: g.web.gfx.shader.create('tint',
 	            g.web.assets['shaders/sprite.vert'],
-	            g.web.assets['shaders/drop.frag']
+	            g.web.assets['shaders/tint.frag']
 	        )
         };
 
@@ -260,15 +260,14 @@ class Renderer
 		}
 
 	    // the plane's uvs are flipped on both axes, so flip the quad to match
-	    const s = [g.web.gfx.width() * (1/g.web.gfx.aspect()), g.web.gfx.height()];
-	    const fit_model = [].mat_scale([-s[0] / W, -s[1] / H, 1])
-	                        .mat_mul([].translate([p[0], p[1], 0]));
+	    const scale = [].mat_scale([-(1/g.web.gfx.aspect()), -1, 1]);
+	    const fit_model = scale.mat_mul([].translate([p[0], p[1], 0]));
 
 		draw_brew(model, p, this.textures.cauldron_mask, potion);
 		// draw_fit(this.textures.cauldron);
 		// draw_region(this.textures.cauldron, [0, 0], [g.web.gfx.width() * (1/g.web.gfx.aspect()), g.web.gfx.height()], [0, 0, 1, 1]);
 		draw_textured_quad(this.textures.cauldron, fit_model, [0, 0, 1, 1]);
-		draw_textured_quad(parseInt(state.time_s * 10) % 2 == 0 ? this.textures.cauldron_fire2 : this.textures.cauldron_fire, [].mat_scale([-s[0] / W, -s[1] / H, 1]), [0, 0, 1, 1]);
+		draw_textured_quad(parseInt(state.time_s * 10) % 2 == 0 ? this.textures.cauldron_fire2 : this.textures.cauldron_fire, scale, [0, 0, 1, 1]);
 	}
 
 	spawn_drop(state, color, name, on_despawn)
@@ -292,7 +291,7 @@ class Renderer
 							.mat_mul([].mat_scale([0.02, 0.04, 1]))
 							.mat_mul([].translate([drop.pos[0], drop.pos[1], 0]));
 
-		    g.web.assets['mesh/plane'].using_shader('drop')
+		    g.web.assets['mesh/plane'].using_shader('tint')
 		        .with_attribute({name:'a_position', buffer: 'positions', components: 3})
 		        .with_attribute({name:'a_tex_coord', buffer: 'texture_coords', components: 2})
 		        .set_uniform('u_model').mat4(model)
@@ -320,7 +319,10 @@ class Renderer
 	draw(state, dt)
 	{
 		if (!state) { return; }
-				
+		
+		const W = g.web.gfx.width(), H = g.web.gfx.height();
+
+		// gl.viewport(0, 0, g.web.gfx.width()/2, g.web.gfx.height());
 		gl.clearColor(0.2, 0.0, 0.25, 1);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -356,6 +358,21 @@ class Renderer
 		{
 			this.transforms['intro'] = draw_region(this.textures.intro, [0, state.intro_easer.value * 1000], [g.web.gfx.width() * (1/g.web.gfx.aspect()), g.web.gfx.height()], [0, 0, 1, 1]);
 		}
+
+		// Draw boxes on the left and right of stage
+		const s = (W / g.web.gfx.aspect()) / W;
+		g.web.assets['mesh/plane'].using_shader('tint')
+			.with_attribute({name:'a_position', buffer: 'positions', components: 3})
+	        .with_attribute({name:'a_tex_coord', buffer: 'texture_coords', components: 2})
+	        .set_uniform('u_model').mat4([].mat_scale([s, 1, 1]).mat_mul([].translate([-2 * s, 0, 0])))
+	        .set_uniform('u_tint').vec4([0.2,0,0.25,1])
+	        .draw_tri_fan();
+		g.web.assets['mesh/plane'].using_shader('tint')
+			.with_attribute({name:'a_position', buffer: 'positions', components: 3})
+	        .with_attribute({name:'a_tex_coord', buffer: 'texture_coords', components: 2})
+	        .set_uniform('u_model').mat4([].mat_scale([s, 1, 1]).mat_mul([].translate([2 * s, 0, 0])))
+	        .set_uniform('u_tint').vec4([0.2,0,0.25,1])
+	        .draw_tri_fan();
 	}
 }
 

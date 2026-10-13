@@ -3,7 +3,7 @@ class Player
 {
 	constructor()
 	{
-		this.correct = 4; // TODO: reset
+		this.correct = 0; // TODO: reset
 		this.incorrect = 0;
 	}
 
