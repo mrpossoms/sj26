@@ -83,6 +83,8 @@ g.update(function (dt)
 
     if (g.state.cauldron.is_overflowing) {
         submitBrew(g.state);
+        g.state.pouring_color = null;
+        g.state.pouring_name = null;
     }
 
     g.state.cauldron.update(dt);
